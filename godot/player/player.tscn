@@ -15,3 +15,13 @@ texture = SubResource("PlaceholderTexture2D_vkqoe")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=242431646]
 position = Vector2(0, -24)
 shape = SubResource("RectangleShape2D_vkqoe")
+
+[node name="标签" type="Label" parent="." unique_id=1419451819]
+offset_left = -20.0
+offset_top = -66.0
+offset_right = 22.0
+offset_bottom = -49.0
+theme_override_font_sizes/font_size = 12
+text = "状态提示"
+horizontal_alignment = 1
+vertical_alignment = 1

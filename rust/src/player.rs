@@ -79,7 +79,7 @@ impl Player {
     }
 
     fn update_debug_label(&mut self) {
-        let Some(mut label) = self.base().try_get_node_as::<Label>("Label") else {
+        let Some(mut label) = self.base().try_get_node_as::<Label>("标签") else {
             return;
         };
 

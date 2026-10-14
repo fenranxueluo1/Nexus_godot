@@ -21,8 +21,8 @@ impl PlayerState {
 
     pub(crate) fn name(self) -> &'static str {
         match self {
-            Self::Idle(_) => "Idle",
-            Self::Run(_) => "Run",
+            Self::Idle(_) => "待机",
+            Self::Run(_) => "奔跑",
         }
     }
 
