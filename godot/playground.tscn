@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://dbjivejplralk"]
 
-[ext_resource type="Texture2D" uid="uid://b2ka4u17n5u1x" path="res://icon.svg" id="1_rupst"]
+[ext_resource type="Texture2D" uid="uid://pdnuyhn4kpn6" path="res://mygame.png" id="1_rupst"]
 
 [node name="Node2D" type="Node2D" unique_id=980310751]
 
-[node name="Icon" type="Player" parent="." unique_id=2005036181]
-position = Vector2(219, 134)
+[node name="Mygame" type="Sprite2D" parent="." unique_id=112588567]
+position = Vector2(240, 139)
+scale = Vector2(0.6276042, 1)
 texture = ExtResource("1_rupst")
