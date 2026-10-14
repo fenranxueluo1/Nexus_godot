@@ -1,51 +1,64 @@
 use godot::prelude::*;
-use godot::classes::Sprite2D;
-use godot::classes::ISprite2D;
+use godot::classes::Input;
+use godot::classes::CharacterBody2D;
+use godot::classes::ICharacterBody2D;
 
 #[derive(GodotClass)]
-#[class(base=Sprite2D)]
+#[class(base=CharacterBody2D)]
 struct Player {
-    speed: f64,
-    angular_speed: f64,
 
-    base: Base<Sprite2D>
+    // 重力加速度
+    gravity: f32,
+
+    // 当前速度向量
+    velocity: Vector2,
+
+    // 水平移动速度
+    move_speed: f32,
+
+    base: Base<CharacterBody2D>
 }
 
 #[godot_api]
-impl ISprite2D for Player {
-    fn init(base: Base<Sprite2D>) -> Self {
+impl ICharacterBody2D for Player {
+    fn init(base: Base<CharacterBody2D>) -> Self {
         godot_print!("Hello, world!"); // 输出到 Godot 控制台
         
         Self {
-            speed: 400.0,
-            angular_speed: std::f64::consts::PI,
+            gravity: 9.8 * 100.0, // 乘以 100 是因为 Godot 单位是像素，按需调整
+            velocity: Vector2::ZERO,
+            move_speed: 100.0,
             base,
         }
     }
 
     fn physics_process(&mut self, delta: f64) {
-        // 在 GDScript中，这将是： 
-        // rotation += angular_speed * delta
+
+        let delta = delta as f32;
+
+        // 计算重力加速度
+        let new_y = self.velocity.y + self.gravity * delta;
+        //把算好的速度重新写入self.velocity变量
+        self.velocity = Vector2::new(self.velocity.x, new_y);
+
+         // —— 按键输入 ——
+        let input = Input::singleton();
+        let mut direction = 0.0;
+
+         if input.is_action_pressed("右") {
+            direction += 1.0;
+        }
+        if input.is_action_pressed("左") {
+            direction -= 1.0;
+        }
+
+        self.velocity = Vector2::new(direction * self.move_speed, self.velocity.y);
+
+        let velocity = self.velocity;
+        self.base_mut().set_velocity(velocity);     //告诉引擎想以这个速度移动
+        self.base_mut().move_and_slide();           //此函数让它真正移动并处理碰撞
+        self.velocity = self.base().get_velocity(); //读取引擎处理后的实际速度，同步回 self.velocity。
         
-        let radians = (self.angular_speed * delta) as f32;
-        self.base_mut().rotate(radians);
-        // 'rotate' 方法需要一个 f32， 
-        // 因此我们将 'self.angular_speed * delta' 的f64 转换为 f32
-
-        let rotation = self.base().get_rotation();
-        let velocity = Vector2::UP.rotated(rotation) * self.speed as f32;
-        self.base_mut().translate(velocity * delta as f32);
     }
 }
 
-#[godot_api]
-impl Player {
-    #[func]
-    fn increase_speed(&mut self, amount: f64) {
-        self.speed += amount;
-        self.base_mut().emit_signal("speed_increased", &[]);
-    }
-
-    #[signal]
-    fn speed_increased();
-}
