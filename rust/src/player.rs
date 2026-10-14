@@ -1,64 +1,89 @@
+use godot::classes::{CharacterBody2D, ICharacterBody2D, Input, Label};
 use godot::prelude::*;
-use godot::classes::Input;
-use godot::classes::CharacterBody2D;
-use godot::classes::ICharacterBody2D;
+
+use crate::player_state::{PlayerState, StateContext};
 
 #[derive(GodotClass)]
-#[class(base=CharacterBody2D)]
+#[class(base = CharacterBody2D)]
 struct Player {
-
-    // 重力加速度
-    gravity: f32,
-
-    // 当前速度向量
-    velocity: Vector2,
-
-    // 水平移动速度
+    #[export]
     move_speed: f32,
-
-    base: Base<CharacterBody2D>
+    direction: Vector2,
+    gravity: f32,
+    state: PlayerState,
+    base: Base<CharacterBody2D>,
 }
 
 #[godot_api]
 impl ICharacterBody2D for Player {
     fn init(base: Base<CharacterBody2D>) -> Self {
-        godot_print!("Hello, world!"); // 输出到 Godot 控制台
-        
         Self {
-            gravity: 9.8 * 100.0, // 乘以 100 是因为 Godot 单位是像素，按需调整
-            velocity: Vector2::ZERO,
             move_speed: 100.0,
+            direction: Vector2::ZERO,
+            gravity: 980.0,
+            state: PlayerState::initial(),
             base,
         }
     }
 
+    fn ready(&mut self) {
+        self.update_debug_label();
+    }
+
+    fn process(&mut self, _delta: f64) {
+        self.update_direction();
+
+        let state = self.state;
+        let next = state.process(&self.state_context());
+        self.change_state(next);
+    }
+
     fn physics_process(&mut self, delta: f64) {
+        let state = self.state;
+        let ctx = self.state_context();
 
-        let delta = delta as f32;
+        let mut velocity = self.base().get_velocity();
+        velocity.y += self.gravity * delta as f32;
+        state.apply_physics(&ctx, &mut velocity);
 
-        // 计算重力加速度
-        let new_y = self.velocity.y + self.gravity * delta;
-        //把算好的速度重新写入self.velocity变量
-        self.velocity = Vector2::new(self.velocity.x, new_y);
-
-         // —— 按键输入 ——
-        let input = Input::singleton();
-        let mut direction = 0.0;
-
-         if input.is_action_pressed("右") {
-            direction += 1.0;
-        }
-        if input.is_action_pressed("左") {
-            direction -= 1.0;
-        }
-
-        self.velocity = Vector2::new(direction * self.move_speed, self.velocity.y);
-
-        let velocity = self.velocity;
-        self.base_mut().set_velocity(velocity);     //告诉引擎想以这个速度移动
-        self.base_mut().move_and_slide();           //此函数让它真正移动并处理碰撞
-        self.velocity = self.base().get_velocity(); //读取引擎处理后的实际速度，同步回 self.velocity。
-        
+        let mut base = self.base_mut();
+        base.set_velocity(velocity);
+        base.move_and_slide();
     }
 }
 
+impl Player {
+    fn state_context(&self) -> StateContext {
+        StateContext {
+            direction: self.direction,
+            move_speed: self.move_speed,
+        }
+    }
+
+    fn update_direction(&mut self) {
+        let input = Input::singleton();
+        self.direction = Vector2::new(
+            input.get_axis("左", "右"),
+            input.get_axis("上", "下"),
+        );
+    }
+
+    fn change_state(&mut self, next: Option<PlayerState>) {
+        let Some(next) = next else { return };
+        if next == self.state {
+            return;
+        }
+
+        self.state = next;
+        self.update_debug_label();
+    }
+
+    fn update_debug_label(&mut self) {
+        let Some(mut label) = self.base().try_get_node_as::<Label>("Label") else {
+            return;
+        };
+
+        let text = self.state.name();
+        label.set_text(text);
+    }
+}

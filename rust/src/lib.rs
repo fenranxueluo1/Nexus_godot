@@ -1,6 +1,10 @@
+mod idle;
+mod player;
+mod player_state;
+mod run;
+
 use godot::prelude::*;
 
-mod player;
 struct MyExtension;
 
 #[gdextension]
